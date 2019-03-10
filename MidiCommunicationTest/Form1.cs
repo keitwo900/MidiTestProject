@@ -33,9 +33,82 @@ namespace MidiCommunicationTest
 			PrintMidi = PrintMidiExe;
 		}
 
+		/// <summary>
+		/// MIDI In テキストボックスに受信したMIDIメッセージを表示します。
+		/// イベントから直接コールできません。デリゲートPrintMidiをInvokeしてください。
+		/// </summary>
+		/// <param name="msg"></param>
 		void PrintMidiExe(string msg)
 		{
 			textBox_MidiIn.AppendText(msg + "\r\n");
+		}
+
+		/// <summary>
+		/// テキストボックスに入力されたMIDIメッセージテキストをバイナリに変換します。
+		/// テキストボックス内のスペース、コロン、カンマ、"0x"、改行コードは取り除かれます。
+		/// </summary>
+		/// <param name="midiText">バイナリに変換したい文字列</param>
+		/// <returns>バイナリ返還されたデータ。16進数でない不正文字列や、奇数個の文字列だった場合はnullが返ります。/returns>
+		byte[] Text2Bin(string midiText)
+		{
+			int i;
+			string midiReplaced; //スペース、コロン、カンマ、"0x"、改行を取り除いた文字列
+			byte[] midiByte;
+
+			midiReplaced = midiText.Replace(" ", "");
+			midiReplaced = midiReplaced.Replace(",", "");
+			midiReplaced = midiReplaced.Replace(":", "");
+			midiReplaced = midiReplaced.Replace("0x", "");
+			midiReplaced = midiReplaced.Replace("\r", "");
+			midiReplaced = midiReplaced.Replace("\n", "");
+
+			if((midiReplaced.Length & 0x01) != 0) return null; //文字数が奇数個の場合は不適切なデータとして扱う
+
+			midiByte = new byte[midiReplaced.Length/2];
+
+			//2つの文字列を1つのバイトに集約
+			for(i=0; i < midiByte.Length; i++)
+			{
+				int j = 2 * i;
+				//奇数文字目
+				if('0' <= midiReplaced[j] && midiReplaced[j] <= '9')
+				{
+					midiByte[i] = (byte)(((byte)midiReplaced[j] - '0') << 4);
+				}
+				else if('a' <= midiReplaced[j] && midiReplaced[j] <= 'f')
+				{
+					midiByte[i] = (byte)(((byte)midiReplaced[j] - 'a' + 0x0A) << 4);
+				}
+				else if('A' <= midiReplaced[j] && midiReplaced[j] <= 'F')
+				{
+					midiByte[i] = (byte)(((byte)midiReplaced[j] - 'A' + 0x0A) << 4);
+				}
+				else
+				{
+					return null; //16進数でない文字列
+				}
+
+				//偶数文字目
+				j++;
+				if ('0' <= midiReplaced[j] && midiReplaced[j] <= '9')
+				{
+					midiByte[i] |= (byte)((byte)midiReplaced[j] - '0');
+				}
+				else if ('a' <= midiReplaced[j] && midiReplaced[j] <= 'f')
+				{
+					midiByte[i] |= (byte)((byte)midiReplaced[j] - 'a' + 0x0A);
+				}
+				else if ('A' <= midiReplaced[j] && midiReplaced[j] <= 'F')
+				{
+					midiByte[i] |= (byte)((byte)midiReplaced[j] - 'A' + 0x0A);
+				}
+				else
+				{
+					return null; //16進数でない文字列
+				}
+			}
+
+			return midiByte;
 		}
 
 		/// <summary>
@@ -43,7 +116,16 @@ namespace MidiCommunicationTest
 		/// </summary>
 		void SendMidi()
 		{
+			byte[] midiByte = Text2Bin(textBox_MidiOut.Text);
+			if(midiByte == null)
+			{
+				MessageBox.Show("入力値が不正です。\r\n16進数で偶数個の文字列で入力してください。",
+					"入力値不正",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+			}
 
+			midiOut.Send(midiByte);
 		}
 
 		/// <summary>
@@ -142,7 +224,6 @@ namespace MidiCommunicationTest
 				if(outPortName == MidiOut.GetPortInformation(i).szPname)
 				{
 					midiOut = new MidiOut(i);
-					midiOut.Send(new byte[] { 0xF0, 0x40, 0x7F, 0x00, 0xF7 });
 					button_MidiOutOpen.BackColor = SystemColors.ControlDarkDark;
 					button_MidiOutClose.BackColor = SystemColors.Control;
 					return;
@@ -164,6 +245,29 @@ namespace MidiCommunicationTest
 			}
 			button_MidiOutOpen.BackColor = SystemColors.Control;
 			button_MidiOutClose.BackColor = SystemColors.ControlDarkDark;
+		}
+
+		/// <summary>
+		/// MIDI Out Sendボタンクリック
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void button_Tx_Click(object sender, EventArgs e)
+		{
+			if (midiOut != null)
+			{
+				SendMidi();
+			}
+		}
+
+		/// <summary>
+		/// MIDI Outテキストボックスクリア
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void button_ClearTx_Click(object sender, EventArgs e)
+		{
+			textBox_MidiOut.ResetText();
 		}
 
 		/// <summary>
@@ -237,6 +341,16 @@ namespace MidiCommunicationTest
 		}
 
 		/// <summary>
+		/// MIDI Inテキストボックスクリア
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void button_ClearRx_Click(object sender, EventArgs e)
+		{
+			textBox_MidiIn.ResetText();
+		}
+
+		/// <summary>
 		/// フォーム終了前処理
 		/// </summary>
 		/// <param name="sender"></param>
@@ -254,16 +368,6 @@ namespace MidiCommunicationTest
 				midiIn.Dispose();
 				midiIn = null;
 			}
-		}
-
-		/// <summary>
-		/// Sendボタンクリック
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void button_Tx_Click(object sender, EventArgs e)
-		{
-			SendMidi();
 		}
 	}
 }

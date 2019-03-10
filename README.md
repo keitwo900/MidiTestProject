@@ -1,15 +1,23 @@
 # MIDI通信テストプロジェクト
 
 <h2> プロジェクト説明 </h2>
-・本プロジェクトは、C#でMIDI通信を行うテストプロジェクトです。
-　Windows Formから、Windowsで認識されているMIDIで認識されているMIDI Out、MIDI Inデバイスのオープン、クローズができます。<br>
-　MIDI Outテキストボックスに入力したMIDIメッセージ文字列はMIDI Outされます。(予定。次のcommitで実装予定)<br>
-　また、MIDI Inデバイスから来たMIDIメッセージは、MIDI In テキストボックスに表示されます。<br>
+本プロジェクトは、C#でMIDI通信を行うテストプロジェクトです。
+Windows Formから、Windowsで認識されているMIDIで認識されているMIDI Out、MIDI Inデバイスのオープン、クローズができます。<br>
+MIDI Outテキストボックスに入力したMIDIメッセージ文字列はMIDI Outされます。<br>
+MIDI Outテキストボックスには16進数で入力してください。'A'-'F'は大文字、小文字のどちらも受け付けます。<br>
+区切り文字として使えるのは、半角スペース、カンマ、コロン、改行です。<br>
+　(入力例)<br>
+　　90407F<br>
+　　90 40 7F<br>
+　　90:40:7f<br>
+　　90,40,7F<br>
+　　0x90 0x40 0x7F<br>
+また、MIDI Inデバイスから来たMIDIメッセージは、MIDI In テキストボックスに表示されます。<br>
 
-・本プロジェクトは、Visual Studio 2017での開発環境です。
+本プロジェクトは、Visual Studio 2017での開発環境です。
 
 <h2> ライセンス </h2>
-・本プロジェクトの一部のファイルの実装において、以下の著作者のライセンスが含まれます。
+本プロジェクトの一部のファイルの実装において、以下の著作者のライセンスが含まれます。
 
 ・MidiCommunicationTest/Event.cs, MidiCommunicationTest/MidiIn.cs: <b>MIT License</b>
 	

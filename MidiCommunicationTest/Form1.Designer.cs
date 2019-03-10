@@ -147,6 +147,7 @@
 			this.button_ClearTx.TabIndex = 4;
 			this.button_ClearTx.Text = "Clear";
 			this.button_ClearTx.UseVisualStyleBackColor = true;
+			this.button_ClearTx.Click += new System.EventHandler(this.button_ClearTx_Click);
 			// 
 			// button_ClearRx
 			// 
@@ -157,6 +158,7 @@
 			this.button_ClearRx.TabIndex = 4;
 			this.button_ClearRx.Text = "Clear";
 			this.button_ClearRx.UseVisualStyleBackColor = true;
+			this.button_ClearRx.Click += new System.EventHandler(this.button_ClearRx_Click);
 			// 
 			// button_MidiOutClose
 			// 
